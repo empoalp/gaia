@@ -2,7 +2,7 @@
            MockCallsHandler, MockContactPhotoHelper, MockContacts,
            MockLazyL10n, MockMozL10n, MockNavigatorMozIccManager,
            MockNavigatorSettings, MocksHelper, MockUtils, Voicemail,
-           AudioCompetingHelper */
+           AudioCompetingHelper, MockTonePlayer */
 
 'use strict';
 
@@ -376,13 +376,15 @@ suite('dialer/handled_call', function() {
 
     setup(function() {
       node = subject.node;
-
-      mockCall._connect();
-      MockCallScreen.mute();
-      MockCallScreen.switchToSpeaker();
     });
 
     suite('from a regular call', function() {
+
+      setup(function() {
+        mockCall._connect();
+        MockCallScreen.mute();
+        MockCallScreen.switchToSpeaker();
+      });
 
       test('should show call ended', function() {
         mockCall._disconnect();
@@ -448,6 +450,12 @@ suite('dialer/handled_call', function() {
         assert.isFalse(MockCallScreen.mShowStatusMessageCalled);
       });
 
+      test('end call tone should be played', function() {
+        var playSpy = this.sinon.spy(MockTonePlayer, 'playSequence');
+        mockCall._disconnect();
+        assert.isTrue(playSpy.calledOnce);
+      });
+
       test('AudioCompetingHelper leaveCompetition gets called on disconnected',
         function() {
           this.sinon.spy(AudioCompetingHelper, 'leaveCompetition');
@@ -459,6 +467,9 @@ suite('dialer/handled_call', function() {
 
     suite('from a group', function() {
       setup(function() {
+        mockCall._connect();
+        MockCallScreen.mute();
+        MockCallScreen.switchToSpeaker();
         mockCall.group = null;
         mockCall.mChangeState('disconnecting');
         mockCall.ongroupchange(mockCall);
@@ -469,6 +480,14 @@ suite('dialer/handled_call', function() {
         assert.isTrue(MockCallScreen.mShowStatusMessageCalled);
         var caller = MockLazyL10n.keys['caller-left-call'].caller;
         assert.isTrue(typeof(caller) === 'string');
+      });
+    });
+
+    suite('the call was not connected', function() {
+      test('end call tone is not played', function() {
+        var playSpy = this.sinon.spy(MockTonePlayer, 'playSequence');
+        mockCall._disconnect();
+        assert.isFalse(playSpy.called);
       });
     });
   });
