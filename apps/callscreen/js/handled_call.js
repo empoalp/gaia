@@ -327,10 +327,7 @@ HandledCall.prototype.disconnected = function hc_disconnected() {
     self._leftGroup = false;
   }
   
-  var tpChannel = TonePlayer.getChannel();
-  TonePlayer.setChannel('telephony');
   TonePlayer.playSequence([[480, 620, 250]]);
-  TonePlayer.setChannel(tpChannel);
 
   this.remove();
 };
